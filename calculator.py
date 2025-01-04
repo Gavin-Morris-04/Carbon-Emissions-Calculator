@@ -1,163 +1,141 @@
-import time
+import tkinter as tk
+from tkinter import ttk, messagebox
+import sqlite3
 
-name = input("What is your name? ")
-print("Hi! " + name)
-time.sleep(1)
-print("Lets see how much carbon emmisions you put out!")
-print(" ")
-time.sleep(1.5)
+# Database setup
+def setup_database():
+    conn = sqlite3.connect("carbon_emissions.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            total_emissions REAL NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
 
-#Now we will ask user about how much they drive
-car_q = input("What vehicle do you drive? 1.) Truck 2.) Car 3.) Suv 4.) Electric? (Answer with #)")
-print(" ")
-car_q = int(car_q)
-if car_q == 1:
-  gasoline_q = input("How many miles do you drive per week? ")
-  print(" ")
-  gasoline_q = int(gasoline_q)
-  gasoline_q = gasoline_q * 52
-  gasoline_q = gasoline_q/18
-  gasoline_a = gasoline_q * 1/42 * 431.87 * 1/1000
-  gasoline_a = gasoline_a * 2204.63
-  gasoline_a = round(gasoline_a, ndigits = 0)
-  gasoline_a = str(gasoline_a)
-  print("You are emitting " + gasoline_a + " pounds of carbon emmisions from your car use in a year.")
-  print(" ")
-  gasoline_a = float(gasoline_a)
-elif car_q == 2:
-  gasoline_q = input("How many miles do you drive per week? ")
-  print(" ")
-  gasoline_q = int(gasoline_q)
-  gasoline_q = gasoline_q * 52
-  gasoline_q = gasoline_q/24.2
-  gasoline_a = gasoline_q * 1/42 * 431.87 * 1/1000
-  gasoline_a = gasoline_a * 2204.63
-  gasoline_a = round(gasoline_a, ndigits = 0)
-  gasoline_a = str(gasoline_a)
-  print("You are emitting out " + gasoline_a + " pounds of carbon emmisions from your car use in a year.")
-  print(" ")
-  gasoline_a = float(gasoline_a)
-elif car_q == 3:
-  gasoline_q = input("How many miles do you drive per week? ")
-  print(" ")
-  gasoline_q = int(gasoline_q)
-  gasoline_q = gasoline_q * 52
-  gasoline_q = gasoline_q/17
-  gasoline_a = gasoline_q * 1/42 * 431.87 * 1/1000
-  gasoline_a = gasoline_a * 2204.63
-  gasoline_a = round(gasoline_a, ndigits = 0)
-  gasoline_a = str(gasoline_a)
-  print("You are emitting " + gasoline_a + " pounds of carbon emmisions from your car use in a year.")
-  print(" ")
-  gasoline_a = float(gasoline_a)
-elif car_q == 4:
-  gasoline_q = input("How many miles do you drive per week? ")
-  print(" ")
-  gasoline_q = int(gasoline_q)
-  gasoline_q = gasoline_q * 52
-  gasoline_q = gasoline_q/24.2
-  gasoline_q = gasoline_q/31
-  gasoline_a = gasoline_q * 1/42 * 431.87 * 1/1000
-  gasoline_a = gasoline_a * 2204.63
-  gasoline_a = round(gasoline_a, ndigits = 0)
-  gasoline_a = str(gasoline_a)
-  print("You are emitting " + gasoline_a + " pounds of carbon emmisions from your car use in a year.")
-  print(" ")
-time.sleep(2)
-gasoline_a = float(gasoline_a)
-time.sleep(4)
+def save_to_database(name, total_emissions):
+    try:
+        conn = sqlite3.connect("carbon_emissions.db")
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO users (name, total_emissions) VALUES (?, ?)", (name, total_emissions))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        messagebox.showerror("Database Error", f"An error occurred while saving to the database: {e}")
 
+def calculate_emissions():
+    try:
+        name = name_entry.get()
+        vehicle_choice = int(vehicle_var.get().split(":")[0])
+        miles_per_week = int(miles_entry.get())
+        electricity_bill = int(electricity_entry.get())
+        house_sqft = int(house_sqft_entry.get())
+        ceiling_height = int(ceiling_height_entry.get())
 
-#Now we will ask user for about how much electricity they use
-print("Now lets find out how many emmisions you put out by using electricity")
-print(" ")
-time.sleep(3.55)
-eq1 = input("How much do you spend on your electricity bill every month? $")
-print(" ")
-eq1 = int(eq1)
-eq1 = eq1*12
-eq1 = eq1 / 9.37
-eq1a = eq1 * 884.2 * (1/(1-0.073)) * 1/1000 * 1/2204.6
-eq1a = eq1a * 2204.63
-eq1a = round(eq1a, ndigits = 0)
-eq1a = str(eq1a)
-print("You are emitting " + eq1a + " pounds of carbon emmisions from your home's electricity usage in a year.")
-print(" ")
-eq1a = float(eq1a)
-print("May seem small but this alone starts to add up over the course of a year")
-print(" ")
-time.sleep(2)
+        # Vehicle emissions calculation
+        if vehicle_choice == 1:
+            mpg = 18
+        elif vehicle_choice == 2:
+            mpg = 24.2
+        elif vehicle_choice == 3:
+            mpg = 17
+        elif vehicle_choice == 4:
+            mpg = 24.2 * 31  # Assuming hybrid/electric adjustments
+        else:
+            raise ValueError("Invalid vehicle choice")
 
+        yearly_miles = miles_per_week * 52
+        gallons_used = yearly_miles / mpg
+        vehicle_emissions = gallons_used * (1/42) * 431.87 * (1/1000) * 2204.63
 
+        # Electricity emissions calculation
+        yearly_electricity_spend = electricity_bill * 12
+        electricity_emissions = yearly_electricity_spend / 9.37 * 884.2 * (1/(1-0.073)) * (1/1000) * 2204.63
 
-#Now we will ask the user for the natural gas 
-print("Finally we will see how much carbon emmsion you put out based on your natural gas usage")
-print(" ")
-time.sleep(2.5)
-ng = input("How many square feet is your house? ")
-print(" ")
-ng = int(ng)
-ng1 = input("How high are your ceilings?(In feet) ")
-print(" ")
-ng1 = int(ng1)
-ng2 = ng1 * ng
-nga = ng2 * 0.0551 * 1/1000
-nga = nga * 2204.63
-nga = round(nga, ndigits = 0)
-nga = str(nga)
-print("From your natural gas usage in your house, you have emmitted " + nga + " pounds of carbon emmisions.")
-nga = float(nga)
-print(" ")
+        # Natural gas emissions calculation
+        house_volume = house_sqft * ceiling_height
+        natural_gas_emissions = house_volume * 0.0551 * (1/1000) * 2204.63
 
-answer = gasoline_a + eq1a + ng1 
-answer = str(answer)
-print("Your total amount of carbon emmsions in pounds in one year is " + answer)
-print(" ")
-print(" ")
-print(" ")
+        # Total emissions
+        total_emissions = round(vehicle_emissions + electricity_emissions + natural_gas_emissions, 2)
 
-time.sleep(4)
+        # Save to database
+        save_to_database(name, total_emissions)
 
-#This is a transiton to the future
-print("Since we now know how many pounds of carbon emmisions that you are emitting, we can start to look at how you can help it.")
+        # Comparison with average
+        avg_emissions = 9977
+        diff = abs(total_emissions - avg_emissions)
+        comparison = f"You emit {diff} lbs {'less' if total_emissions < avg_emissions else 'more'} than the average person in New Orleans."
 
-#We now start talking about the future
-time.sleep(3.5)
-print(" ")
-print("    ###    ")
-print("  #######  ")
-print("  #######  ")
-print("  #######  ")
-print("    ###    ")
-print("    [|]    ")
-print("    [|]    ")
-print("    [|]    ")
-print("   [|||]   ")
-print("* Tree of Life *")
-time.sleep(3.5)
-print("")
-print("")
-print("")
-print("")
-print("Your total carbom emissions: " + answer)
-print("")
-x = 9977
-answer = float(answer)
-difference = x - answer
-if difference < 0:
-  difference = difference * -1
-difference = str(difference)
-if answer > x:
-  print("You are emmiting " + difference + " lbs. more than the average person in the New Orleans area." )
-elif answer < x:
-  print("You are emitting " + difference + " lbs. less than the average person in the New Orleans area")
-else:
-  print("You are emmiting the same amount of carbon emmsions as the average person in the New Orleans area.")
-x = str(x)
+        # Display results
+        result = (
+            f"Hello {name}!\n"
+            f"Your yearly vehicle emissions: {round(vehicle_emissions)} lbs\n"
+            f"Your yearly electricity emissions: {round(electricity_emissions)} lbs\n"
+            f"Your yearly natural gas emissions: {round(natural_gas_emissions)} lbs\n"
+            f"Your total yearly emissions: {total_emissions} lbs\n\n"
+            f"{comparison}\n"
+            f"Avg. emissions in New Orleans: {avg_emissions} lbs"
+        )
+        messagebox.showinfo("Carbon Emissions Results", result)
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
 
-print("Avg. total carbon emmisions of one person in the New Orleans area is " + x)
-print("")
-print("")
-print("This polluted air is not something that should be taken lightly. This is the air that you breathe every single day and can be cause of you and or your loved ones illness. Carbon dioxide is a green house gas and green house gases trap heat and lead to global warming. But you can very quickly start to reduce your emmsions.One big way can start to reduce your carbon emmisons is by recycling. ")
+# Tkinter setup
+root = tk.Tk()
+root.title("Carbon Emissions Calculator")
+root.geometry("500x400")
+root.resizable(False, False)
 
-print("")
+# Style configuration
+style = ttk.Style()
+style.configure("TLabel", font=("Arial", 12))
+style.configure("TButton", font=("Arial", 12))
+style.configure("TEntry", font=("Arial", 12))
+
+# Main frame
+frame = ttk.Frame(root, padding="20 20 20 20")
+frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+
+# Name
+ttk.Label(frame, text="What is your name?").grid(row=0, column=0, sticky="w", pady=5)
+name_entry = ttk.Entry(frame, width=30)
+name_entry.grid(row=0, column=1, pady=5)
+
+# Vehicle type
+ttk.Label(frame, text="What vehicle do you drive?").grid(row=1, column=0, sticky="w", pady=5)
+vehicle_var = tk.StringVar(value="1: Truck")
+vehicle_menu = ttk.Combobox(frame, textvariable=vehicle_var, state="readonly", width=27)
+vehicle_menu['values'] = ["1: Truck", "2: Car", "3: SUV", "4: Electric"]
+vehicle_menu.grid(row=1, column=1, pady=5)
+vehicle_menu.current(0)
+
+# Miles driven per week
+ttk.Label(frame, text="How many miles do you drive per week?").grid(row=2, column=0, sticky="w", pady=5)
+miles_entry = ttk.Entry(frame, width=30)
+miles_entry.grid(row=2, column=1, pady=5)
+
+# Electricity bill
+ttk.Label(frame, text="What is your monthly electricity bill? ($)").grid(row=3, column=0, sticky="w", pady=5)
+electricity_entry = ttk.Entry(frame, width=30)
+electricity_entry.grid(row=3, column=1, pady=5)
+
+# House details
+ttk.Label(frame, text="House square footage:").grid(row=4, column=0, sticky="w", pady=5)
+house_sqft_entry = ttk.Entry(frame, width=30)
+house_sqft_entry.grid(row=4, column=1, pady=5)
+
+ttk.Label(frame, text="Ceiling height (in feet):").grid(row=5, column=0, sticky="w", pady=5)
+ceiling_height_entry = ttk.Entry(frame, width=30)
+ceiling_height_entry.grid(row=5, column=1, pady=5)
+
+# Calculate button
+calculate_button = ttk.Button(frame, text="Calculate Emissions", command=calculate_emissions)
+calculate_button.grid(row=6, column=0, columnspan=2, pady=20)
+
+# Run the application
+setup_database()  # Setup the database when the application starts
+root.mainloop()
